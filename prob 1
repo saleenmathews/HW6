@@ -1,0 +1,228 @@
+# region imports
+from scipy.optimize import fsolve
+# endregion
+
+###############################################################
+class Resistor:
+    def __init__(self, R=1.0, i=0.0, name='ab'):
+        self.Resistance = R
+        self.Current = i
+        self.Name = name
+
+    def DeltaV(self):
+        return self.Current * self.Resistance
+
+
+class VoltageSource:
+    def __init__(self):
+        self.Name = ""
+        self.Voltage = 0.0
+
+
+class Loop:
+    def __init__(self):
+        self.Name = ""
+        self.Nodes = []
+
+
+###############################################################
+
+class ResistorNetwork:
+    def __init__(self):
+        self.Loops = []
+        self.Resistors = []
+        self.VSources = []
+ ###########################################################
+       def BuildNetworkFromFile(self, filename):
+        Txt = open(filename).read().split('\n')
+
+        i = 0
+        while i < len(Txt):
+            line = Txt[i].lower().strip()
+
+            if "<resistor>" in line:
+                i = self.MakeResistor(i, Txt)
+            elif "<source>" in line:
+                i = self.MakeVSource(i, Txt)
+            elif "<loop>" in line:
+                i = self.MakeLoop(i, Txt)
+
+            i += 1
+
+    def MakeResistor(self, i, Txt):
+        R = Resistor()
+        i += 1
+
+        while i < len(Txt):
+            line = Txt[i].lower().strip()
+
+            if "</resistor>" in line:
+                break
+
+            if "=" in line:
+                if "name" in line:
+                    R.Name = line.split('=')[1].strip()
+                if "resistance" in line:
+                    R.Resistance = float(line.split('=')[1])
+
+            i += 1
+
+        self.Resistors.append(R)
+        return i
+
+    def MakeVSource(self, i, Txt):
+        VS = VoltageSource()
+        i += 1
+
+        while i < len(Txt):
+            line = Txt[i].lower().strip()
+
+            if "</source>" in line:
+                break
+
+            if "=" in line:
+                if "name" in line:
+                    VS.Name = line.split('=')[1].strip()
+                if "value" in line:
+                    VS.Voltage = float(line.split('=')[1])
+
+            i += 1
+
+        self.VSources.append(VS)
+        return i
+
+    def MakeLoop(self, i, Txt):
+        L = Loop()
+        i += 1
+
+        while i < len(Txt):
+            line = Txt[i].lower().strip()
+
+            if "</loop>" in line:
+                break
+
+            if "=" in line:
+                if "name" in line:
+                    L.Name = line.split('=')[1].strip()
+                if "nodes" in line:
+                    line = line.replace(" ", "")
+                    L.Nodes = line.split('=')[1].split(',')
+
+            i += 1
+
+        self.Loops.append(L)
+        return i
+
+    ###########################################################
+    def AnalyzeCircuit(self):
+        i0 = [1, 1, 1]
+        sol = fsolve(self.GetKirchoffVals, i0)
+
+        print("I1 =", round(sol[0], 3))
+        print("I2 =", round(sol[1], 3))
+        print("I3 =", round(sol[2], 3))
+
+        return sol
+
+    def GetKirchoffVals(self, i):
+        I1, I2, I3 = i
+
+        self.GetResistorByName('ad').Current = I1
+        self.GetResistorByName('bc').Current = I1
+        self.GetResistorByName('cd').Current = I3
+        self.GetResistorByName('ce').Current = I2
+
+        # KCL at node c
+        node_c = I1 + I2 - I3
+
+        KVL = self.GetLoopVoltageDrops()
+        KVL.append(node_c)
+
+        return KVL
+
+    ###########################################################
+    def GetElementDeltaV(self, name):
+        for r in self.Resistors:
+            if name == r.Name or name[::-1] == r.Name:
+                return -r.DeltaV()
+
+        for v in self.VSources:
+            if name == v.Name:
+                return v.Voltage
+            if name[::-1] == v.Name:
+                return -v.Voltage
+
+    def GetLoopVoltageDrops(self):
+        vals = []
+
+        for L in self.Loops:
+            total = 0
+            for n in range(len(L.Nodes)):
+                if n == len(L.Nodes) - 1:
+                    name = L.Nodes[0] + L.Nodes[n]
+                else:
+                    name = L.Nodes[n] + L.Nodes[n + 1]
+
+                total += self.GetElementDeltaV(name)
+
+            vals.append(total)
+
+        return vals
+
+    def GetResistorByName(self, name):
+        for r in self.Resistors:
+            if r.Name == name:
+                return r
+
+
+###############################################################
+
+class ResistorNetwork_2(ResistorNetwork):
+
+    def AnalyzeCircuit(self):
+        i0 = [1, 1, 1, 1]
+        sol = fsolve(self.GetKirchoffVals, i0)
+
+        print("I1 =", round(sol[0], 3))
+        print("I2 =", round(sol[1], 3))
+        print("I3 =", round(sol[2], 3))
+        print("I4 =", round(sol[3], 3))  # parallel branch
+
+        return sol
+
+    def GetKirchoffVals(self, i):
+        I1, I2, I3, I4 = i
+
+        self.GetResistorByName('ad').Current = I1
+        self.GetResistorByName('bc').Current = I1
+        self.GetResistorByName('cd').Current = I3
+        self.GetResistorByName('ce').Current = I2
+        self.GetResistorByName('de').Current = I4  # parallel resistor
+
+        # KCL equations
+        node_c = I1 + I2 - I3
+        node_d = I3 - I2 - I4
+
+        KVL = self.GetLoopVoltageDrops()
+        KVL.append(node_c)
+        KVL.append(node_d)
+
+        return KVL
+
+
+
+###############################################################
+def main():
+    print("Network 1:")
+    net = ResistorNetwork()
+    net.BuildNetworkFromFile("ResistorNetwork.txt")
+    net.AnalyzeCircuit()
+
+    print("\nNetwork 2:")
+    net2 = ResistorNetwork_2()
+    net2.BuildNetworkFromFile("ResistorNetwork_2.txt")
+    net2.AnalyzeCircuit()
+
+
+if __name__ == "__main__":
+    main()
