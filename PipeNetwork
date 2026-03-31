@@ -1,0 +1,120 @@
+#region imports
+from scipy.optimize import fsolve
+import numpy as np
+from Fluid import Fluid
+from Node import Node
+#endregion
+
+# region class definitions
+class PipeNetwork():
+    # region constructor
+    def __init__(self, Pipes=[], Loops=[], Nodes=[], fluid=Fluid()):
+        '''
+        The pipe network is built from pipe, node, loop, and fluid objects.
+        :param Pipes: a list of pipe objects
+        :param Loops: a list of loop objects
+        :param Nodes: a list of node objects
+        :param fluid: a fluid object
+        '''
+        # region attributes
+        self.loops = Loops
+        self.nodes = Nodes
+        self.Fluid = fluid
+        self.pipes = Pipes
+        # endregion
+    # endregion
+
+    # region methods
+    def findFlowRates(self):
+        '''
+        Analyze pipe network and find flow rates given constraints:
+        i) no net flow into nodes
+        ii) no net pressure drops in loops.
+        :return: array of flow rates in pipes
+        '''
+        N = len(self.nodes) + len(self.loops)  # total number of equations
+
+        # Initial guess for flow rates - length N
+        Q0 = np.full(N, 10.0)
+
+        def fn(q):
+            """
+            Callback for fsolve. q is array of flow rates for pipes + extra variable.
+            Returns array of residuals for node continuity and loop head loss.
+            """
+            # Update pipe flow rates from q
+            for i in range(len(self.pipes)):
+                self.pipes[i].Q = q[i]
+
+            # Calculate net flow rates at nodes (should be zero ideally)
+            L = self.getNodeFlowRates()
+
+            # Calculate net head loss in loops (should be zero ideally)
+            L += self.getLoopHeadLosses()
+
+            return L
+
+        # Solve nonlinear system of equations
+        FR = fsolve(fn, Q0)
+        return FR
+
+    def getNodeFlowRates(self):
+        # Each node calculates its net flow rate (sum in - sum out + extFlow)
+        qNet = [n.getNetFlowRate() for n in self.nodes]
+        return qNet
+
+    def getLoopHeadLosses(self):
+        # Each loop calculates net head loss around it
+        lhl = [l.getLoopHeadLoss() for l in self.loops]
+        return lhl
+
+    def getPipe(self, name):
+        # Return pipe object by name
+        for p in self.pipes:
+            if name == p.Name():
+                return p
+        return None
+
+    def getNodePipes(self, node):
+        # Return list of pipes connected to node
+        l = []
+        for p in self.pipes:
+            if p.oContainsNode(node):
+                l.append(p)
+        return l
+
+    def nodeBuilt(self, node):
+        # Check if node object with this name exists
+        for n in self.nodes:
+            if n.name == node:
+                return True
+        return False
+
+    def getNode(self, name):
+        # Return node object by name
+        for n in self.nodes:
+            if n.name == name:
+                return n
+        return None
+
+    def buildNodes(self):
+        # Create node objects automatically by inspecting pipes' endpoints
+        for p in self.pipes:
+            if not self.nodeBuilt(p.startNode):
+                self.nodes.append(Node(p.startNode, self.getNodePipes(p.startNode)))
+            if not self.nodeBuilt(p.endNode):
+                self.nodes.append(Node(p.endNode, self.getNodePipes(p.endNode)))
+
+    def printPipeFlowRates(self):
+        for p in self.pipes:
+            p.printPipeFlowRate()
+
+    def printNetNodeFlows(self):
+        for n in self.nodes:
+            print(f'net flow into node {n.name} is {n.getNetFlowRate():.2f} L/s')
+
+    def printLoopHeadLoss(self):
+        for l in self.loops:
+            print(f'head loss for loop {l.name} is {l.getLoopHeadLoss():.2f} m')
+    # endregion
+#endregion
