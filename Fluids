@@ -1,0 +1,16 @@
+#region class definitions
+class Fluid():
+    #region constructor
+    def __init__(self, mu=0.00089, rho=1000):
+        '''
+        Default properties are for water
+        :param mu: dynamic viscosity in Pa*s (kg/(m·s))
+        :param rho: density in kg/m^3
+        '''
+        #region attributes
+        self.mu = mu                     # Copy argument directly
+        self.rho = rho                   # Copy argument directly
+        self.nu = self.mu / self.rho     # Kinematic viscosity = mu / rho (m²/s)
+        #endregion
+    #endregion
+#endregion
