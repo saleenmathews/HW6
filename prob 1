@@ -1,8 +1,10 @@
+Problem 1
 # region imports
 from scipy.optimize import fsolve
 # endregion
 
 ###############################################################
+
 class Resistor:
     def __init__(self, R=1.0, i=0.0, name='ab'):
         self.Resistance = R
@@ -26,14 +28,18 @@ class Loop:
 
 
 ###############################################################
-
+# BASE NETWORK
+###############################################################
 class ResistorNetwork:
     def __init__(self):
         self.Loops = []
         self.Resistors = []
         self.VSources = []
- ###########################################################
-       def BuildNetworkFromFile(self, filename):
+
+    ###########################################################
+    # FILE READER
+    ###########################################################
+    def BuildNetworkFromFile(self, filename):
         Txt = open(filename).read().split('\n')
 
         i = 0
@@ -114,6 +120,7 @@ class ResistorNetwork:
         return i
 
     ###########################################################
+
     def AnalyzeCircuit(self):
         i0 = [1, 1, 1]
         sol = fsolve(self.GetKirchoffVals, i0)
@@ -210,8 +217,8 @@ class ResistorNetwork_2(ResistorNetwork):
         return KVL
 
 
-
 ###############################################################
+
 def main():
     print("Network 1:")
     net = ResistorNetwork()
@@ -226,3 +233,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
