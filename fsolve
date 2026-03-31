@@ -1,0 +1,133 @@
+# region imports
+from scipy.optimize import fsolve
+import matplotlib.pyplot as plt
+import numpy as np
+from copy import deepcopy
+# endregion
+
+# region functions
+def twoQuadratics(vals):  # vals is a list of 2 numbers ???
+    """
+    Two quadratic equations are defined in this function
+    One is the equation of a circle centered at 0,0: x^2 + y^2 = r^2
+    The other is the equation of a parabola through 0,1: y=0.5*x^2+1
+    """
+    x, y = vals
+
+    # Circle: radius = 4
+    f1val = x**2 + y**2 - 16
+
+    # Parabola
+    f2val = 0.5 * x**2 + 1 - y
+
+    return (f1val, f2val)
+
+
+def AnothertwoQuadratics(vals, radius=2, width=0.5, offset=1):
+    """
+    1st eqn: circle centered at zero with adjustable radius
+    2nd eqn: parabola with adjustable width and offset
+    """
+    x, y = vals
+
+    f1val = x**2 + y**2 - radius**2
+    f2val = width * x**2 + offset - y
+
+    return (f1val, f2val)
+
+
+def fromNotes(vals):
+    x, y = vals
+    f1val = np.sin(x) - 3 * y
+    f2val = np.exp(y) + np.cos(x)
+    return (f1val, f2val)
+
+
+def main():
+    """
+    Demonstrates FSOLVE for solving systems of nonlinear equations
+    """
+
+    # First system
+    (x, y) = fsolve(twoQuadratics, (1.2, 0.4))
+    print("\n\nFirst function, No args possible:", x, y)
+
+    # Plot first system
+    xvals = np.linspace(0, 5, 100)
+    y_fn1 = np.array([np.sqrt(-x**2 + 16) for x in xvals])
+    y_fn2 = np.array([0.5 * x**2 + 1 for x in xvals])
+
+    plt.plot(xvals, y_fn1)
+    plt.plot(xvals, y_fn2)
+    plt.plot(x, y, marker='o', markerfacecolor='none',
+             markeredgecolor='red', markersize=14)
+
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.ylim(0, 4)
+    plt.xlim(0, 4)
+    plt.grid()
+    plt.show()
+
+    # Second system with parameters
+    Rgs = (4, 0.2, 1)
+    radius, width, offset = Rgs
+
+    (x, y) = fsolve(AnothertwoQuadratics, (1, 1), Rgs)
+    print("Second function:", x, y)
+
+    # Plot second system
+    xvals = np.linspace(0, 5, 100)
+    y_fn1 = np.array([np.sqrt(-x**2 + radius**2) for x in xvals])
+    y_fn2 = np.array([width * x**2 + offset for x in xvals])
+
+    plt.plot(xvals, y_fn1)
+    plt.plot(xvals, y_fn2)
+    plt.plot(x, y, marker='o', markerfacecolor='none',
+             markeredgecolor='red', markersize=14)
+
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.ylim(0, 4)
+    plt.xlim(0, 4)
+    plt.show()
+
+    # Third system
+    (x, y) = fsolve(fromNotes, (-3, 0))
+    print("fromNotes:", x, y)
+
+    # Plot third system (first root)
+    xvals = np.linspace(-3.5, -2, 100)
+    y_fn1 = np.array([1/3 * np.sin(x) for x in xvals])
+    y_fn2 = np.array([np.log(-np.cos(x)) for x in xvals])
+
+    plt.plot(xvals, y_fn1)
+    plt.plot(xvals, y_fn2)
+    plt.plot(x, y, marker='o', markerfacecolor='none',
+             markeredgecolor='red', markersize=14)
+
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.show()
+
+    # Find second root
+    (x, y) = fsolve(fromNotes, (-2, 0))
+    print("fromNotes:", x, y)
+
+    # Plot second root
+    plt.plot(xvals, y_fn1)
+    plt.plot(xvals, y_fn2)
+    plt.plot(x, y, marker='o', markerfacecolor='none',
+             markeredgecolor='blue', markersize=14)
+
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.show()
+
+
+# endregion
+
+# region function calls
+if __name__ == "__main__":
+    main()
+# endregion
