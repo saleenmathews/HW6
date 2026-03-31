@@ -1,4 +1,4 @@
-Problem 1
+#####Problem 1
 # region imports
 from scipy.optimize import fsolve
 # endregion
@@ -28,8 +28,7 @@ class Loop:
 
 
 ###############################################################
-# BASE NETWORK
-###############################################################
+
 class ResistorNetwork:
     def __init__(self):
         self.Loops = []
@@ -37,8 +36,7 @@ class ResistorNetwork:
         self.VSources = []
 
     ###########################################################
-    # FILE READER
-    ###########################################################
+
     def BuildNetworkFromFile(self, filename):
         Txt = open(filename).read().split('\n')
 
@@ -233,4 +231,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
