@@ -1,3 +1,5 @@
+Problem 2
+
 ########################################################################################################################
 # region imports
 from Fluid import Fluid
@@ -27,9 +29,7 @@ from PipeNetwork import PipeNetwork
 
 
 def main():
-    water = Fluid(rho=1000, mu=0.00089)  # your fluid
-
-    PN = PipeNetwork(water)
+    water = Fluid(rho=1000, mu=0.00089)     PN = PipeNetwork(water)
 
     # Add pipes (example data)
     roughness = 0.00025
@@ -37,7 +37,7 @@ def main():
     PN.pipes.append(Pipe('a', 'c', 100, 200, roughness, water))
     PN.pipes.append(Pipe('b', 'e', 100, 200, roughness, water))
     PN.pipes.append(Pipe('c', 'd', 125, 200, roughness, water))
-    PN.pipes.append(Pipe('c', 'f', 100, 150, roughness, water))
+    PN.pipes.append(Pipe('c', 'f', 100, 150, roughness, water))Alterations in specific values 
     PN.pipes.append(Pipe('d', 'e', 125, 200, roughness, water))
     PN.pipes.append(Pipe('d', 'g', 100, 150, roughness, water))
     PN.pipes.append(Pipe('e', 'h', 100, 150, roughness, water))
@@ -56,7 +56,7 @@ def main():
     PN.loops.append(Loop('B', [PN.getPipe('c-d'), PN.getPipe('d-g'), PN.getPipe('f-g'), PN.getPipe('c-f')]))
     PN.loops.append(Loop('C', [PN.getPipe('d-e'), PN.getPipe('e-h'), PN.getPipe('g-h'), PN.getPipe('d-g')]))
 
- 
+
     PN.findFlowRates()
 
 
@@ -66,3 +66,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
